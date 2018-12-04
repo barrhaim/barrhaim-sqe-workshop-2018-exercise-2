@@ -1,4 +1,5 @@
 import Trow from './Trow';
+var rows = []
 
 function parseBody(toParse) {
     return ['']
@@ -147,6 +148,7 @@ function parseProgram(toParse) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 function template(line, type, name, condition, value) {
+    rows.push(new Trow(line, type, name, condition, value));
     return new Trow(line, type, name, condition, value).toHtml();
 }
 
@@ -177,4 +179,8 @@ function parse(toParse, controlFlag) {
         (type === 'IfStatement' ? supermap[type](toParse, controlFlag) : '');
 }
 
-export {parse};
+function getTable(){
+    return rows;
+}
+
+export {parse,getTable};
