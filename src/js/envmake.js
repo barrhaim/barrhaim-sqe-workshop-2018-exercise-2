@@ -18,12 +18,15 @@ function genEnv(ast, envs, baseEnv) {
 
 
 function returnStatement(ast, envs, baseEnv) {
+    makeEnv(envs, baseEnv, ast.loc.start.line);
     genEnv(ast.argument,envs,baseEnv);
 }
 function expressionStatement(ast, envs, baseEnv) {
+    makeEnv(envs, baseEnv, ast.loc.start.line);
     genEnv(ast.expression,envs,baseEnv);
 }
 function VariableDeclarationEnv(ast, envs, baseEnv) {
+    makeEnv(envs, baseEnv, ast.loc.start.line);
     ast.declarations.forEach(dec => {
         genEnv(dec, envs, baseEnv);
     });
@@ -52,6 +55,7 @@ function whileStatementEnv(ast, envs) {
 }
 
 function ifStatementEnv(ast, envs ,baseEnv) {
+    makeEnv(envs, baseEnv, ast.loc.start.line);
     genEnv(ast.consequent,envs,copyMap(baseEnv));
     if(ast.alternate!==null){
         genEnv(ast.alternate,envs,copyMap(baseEnv));
