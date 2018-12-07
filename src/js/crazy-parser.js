@@ -83,16 +83,16 @@ function binaryExpressionToString(toParse) {
     }
 }
 function handleBinary(toParse){
-    let mymap = {
-        '&': '&amp',
-        '&&': '&amp&amp',
-        '<': '&lt',
-        '>': '&gt'
-    };
+    // let mymap = {
+    //     '&': '&amp',
+    //     '&&': '&amp&amp',
+    //     '<': '&lt',
+    //     '>': '&gt'
+    // };
     let op = toParse['operator'];
     return (
-        binaryExpressionToString(toParse['left']) +
-        (op in mymap ? mymap[op] : op) +
+        binaryExpressionToString(toParse['left']) + // (op in mymap ? mymap[op] : op) +
+        op +
         binaryExpressionToString(toParse['right'])
     );
 }
@@ -179,8 +179,10 @@ function parse(toParse, controlFlag) {
         (type === 'IfStatement' ? supermap[type](toParse, controlFlag) : '');
 }
 
-function getTable(){
-    return rows;
+function getTableAndRefresh(){
+    let sem = rows;
+    rows = [];
+    return sem;
 }
 
-export {parse,getTable};
+export {parse,getTableAndRefresh};
