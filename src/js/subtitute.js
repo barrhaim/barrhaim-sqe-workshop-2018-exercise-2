@@ -54,7 +54,13 @@ function getLinesColor(table, envs) {
             let linearray = [l.condition];
             let envOfLine = envs[l.line];
             let hybird = linearray.concat(Object.keys(envOfLine));
-            let newcond = hybird.reduce((acc, v) => morphline(acc, v, envOfLine[v]));
+            let con ='';
+            let newcond ='1';
+            while(con !== newcond){
+                con = newcond;
+                newcond = hybird.reduce((acc, v) => morphline(acc, v, envOfLine[v]));
+                hybird = [newcond].concat(Object.keys(envOfLine));
+            }
             marker[l.line] = eval(newcond);
         }
     });
@@ -67,7 +73,13 @@ function subtitueHelper(lines, envs) {
         if (envOfLine !== undefined) {
             let linearray = [lines[i]];
             let hybird = linearray.concat(Object.keys(envOfLine));
-            lines[i] = hybird.reduce((acc, v) => morphline(acc, v, envOfLine[v]));
+            let before = '';
+            while(before !== lines[i]){
+                before = lines[i];
+                lines[i] = hybird.reduce((acc, v) => morphline(acc, v, envOfLine[v]));
+                hybird = [lines[i]].concat(Object.keys(envOfLine));
+            }
+
         }
     }
     return lines;
@@ -85,7 +97,7 @@ function removeMeaninglessAssignments(ast, code, functionParams) {
     let lines = code.split('\n');
     for (let i = 0; i < table.length; i++) {
         if (toDelete(table, i, lines)) {
-            if (!(table[i].name in functionParams)) {
+            if (functionParams.indexOf(table[i].name)===-1) {
                 lines[table[i].line - 1] = '';
             }
         }
@@ -162,8 +174,35 @@ function verifyValidPick(line, start, end) {
     if (start > 0 && re.test(line[start - 1])) {
         return false;
     }
-    return !(end + 1 < line.length - 1 && re.test(line[end + 1]));
+    return !(end + 1 < line.length - 1 && re.test(line[end + 1])) && nextCharNotEq(line,end);
 
+}
+
+function nextCharNotEq(line, start){
+    for(let i = start + 1 ; i < line.length ; i++){
+        if(line[i]!==' '&& line[i] !=='  ') {
+            if(line[i] === '=' && eqclose(line,i)){
+                return true;
+            }
+            else if(line[i] === '='){
+                return false;
+            }
+            return true;
+        }
+    }
+    return true;
+}
+
+function eqclose(line, start){
+    for(let i = start + 1 ; i < line.length ; i++){
+        if(line[i]!==' '&& line[i] !=='  ') {
+            if(line[i] === '='){
+                return true;
+            }
+            return false;
+        }
+    }
+    return false;
 }
 
 function filterZeros(envs) {

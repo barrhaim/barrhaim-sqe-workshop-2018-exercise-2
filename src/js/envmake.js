@@ -54,17 +54,16 @@ function assignmentExpressionEnv(ast, envs, baseEnv,input) {
     baseEnv[ast.left.name] = val;
 }
 
-
-function whileStatementEnv(ast, envs) {
-
-}
-
 function ifStatementEnv(ast, envs ,baseEnv,input) {
     makeEnv(envs, baseEnv, ast.loc.start.line);
     genEnv(ast.consequent,envs,copyMap(baseEnv));
     if(ast.alternate!==null){
-        genEnv(ast.alternate,envs,copyMap(baseEnv));
+        genEnv(ast.alternate,envs,copyMap(baseEnv),input);
     }
+}
+function whileStatementEnv(ast,envs,baseEnv,input){
+    makeEnv(envs, baseEnv, ast.loc.start.line);
+    genEnv(ast.body,envs,copyMap(baseEnv),input);
 }
 
 function functionDeclarationEnv(ast, envs, baseEnv, input) {
