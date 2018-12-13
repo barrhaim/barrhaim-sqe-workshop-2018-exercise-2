@@ -1,8 +1,7 @@
 import {morphline} from './subtitute';
 
 
-
-function genEnv(ast, envs, baseEnv,input) {
+function genEnv(ast, envs, baseEnv, input) {
     let envfunc = {
         'FunctionDeclaration': functionDeclarationEnv,
         'VariableDeclaration': VariableDeclarationEnv,
@@ -10,13 +9,13 @@ function genEnv(ast, envs, baseEnv,input) {
         'AssignmentExpression': assignmentExpressionEnv,
         'WhileStatement': whileStatementEnv,
         'IfStatement': ifStatementEnv,
-        'ExpressionStatement':expressionStatement,
-        'ReturnStatement':returnStatement
+        'ExpressionStatement': expressionStatement,
+        'ReturnStatement': returnStatement
     };
-    if(input!==undefined && ast.type ==='FunctionDeclaration'){
-        functionDeclarationEnv(ast,envs,baseEnv,input);
-    }else{
-        ast.type in envfunc ? envfunc[ast.type](ast, envs, baseEnv,input) : bodyEnv(ast, envs, baseEnv,input);
+    if (input !== undefined && ast.type === 'FunctionDeclaration') {
+        functionDeclarationEnv(ast, envs, baseEnv, input);
+    } else {
+        ast.type in envfunc ? envfunc[ast.type](ast, envs, baseEnv, input) : bodyEnv(ast, envs, baseEnv, input);
     }
 
 }
@@ -24,20 +23,22 @@ function genEnv(ast, envs, baseEnv,input) {
 
 function returnStatement(ast, envs, baseEnv, input) {
     makeEnv(envs, baseEnv, ast.loc.start.line);
-    genEnv(ast.argument,envs,baseEnv,input);
+    genEnv(ast.argument, envs, baseEnv, input);
 }
-function expressionStatement(ast, envs, baseEnv,input) {
+
+function expressionStatement(ast, envs, baseEnv, input) {
     makeEnv(envs, baseEnv, ast.loc.start.line);
-    genEnv(ast.expression,envs,baseEnv,input);
+    genEnv(ast.expression, envs, baseEnv, input);
 }
-function VariableDeclarationEnv(ast, envs, baseEnv,input) {
+
+function VariableDeclarationEnv(ast, envs, baseEnv, input) {
     makeEnv(envs, baseEnv, ast.loc.start.line);
     ast.declarations.forEach(dec => {
-        genEnv(dec, envs, baseEnv,input);
+        genEnv(dec, envs, baseEnv, input);
     });
 }
 
-function variableDeclaratorEnv(ast, envs, baseEnv,input) {
+function variableDeclaratorEnv(ast, envs, baseEnv, input) {
     makeEnv(envs, baseEnv, ast.loc.start.line);
     let currentmap = envs[ast.loc.start.line];
     let val = ast.init === null ?
@@ -46,7 +47,7 @@ function variableDeclaratorEnv(ast, envs, baseEnv,input) {
     baseEnv[ast.id.name] = val;
 }
 
-function assignmentExpressionEnv(ast, envs, baseEnv,input) {
+function assignmentExpressionEnv(ast, envs, baseEnv, input) {
     makeEnv(envs, baseEnv, ast.loc.start.line);
     let currentmap = envs[ast.loc.start.line];
     let val = makeItRight(currentmap, binaryExpressionToString(ast.right));
@@ -54,48 +55,49 @@ function assignmentExpressionEnv(ast, envs, baseEnv,input) {
     baseEnv[ast.left.name] = val;
 }
 
-function ifStatementEnv(ast, envs ,baseEnv,input) {
+function ifStatementEnv(ast, envs, baseEnv, input) {
     makeEnv(envs, baseEnv, ast.loc.start.line);
-    genEnv(ast.consequent,envs,copyMap(baseEnv));
-    if(ast.alternate!==null){
-        genEnv(ast.alternate,envs,copyMap(baseEnv),input);
+    genEnv(ast.consequent, envs, copyMap(baseEnv));
+    if (ast.alternate !== null) {
+        genEnv(ast.alternate, envs, copyMap(baseEnv), input);
     }
 }
-function whileStatementEnv(ast,envs,baseEnv,input){
+
+function whileStatementEnv(ast, envs, baseEnv, input) {
     makeEnv(envs, baseEnv, ast.loc.start.line);
-    genEnv(ast.body,envs,copyMap(baseEnv),input);
+    genEnv(ast.body, envs, copyMap(baseEnv), input);
 }
 
 function functionDeclarationEnv(ast, envs, baseEnv, input) {
     makeEnv(envs, baseEnv, ast.loc.start.line);
     let current = envs[ast.loc.start.line];
-    if(input!==undefined){
-        let i =0;
+    if (input !== undefined) {
+        let i = 0;
         ast.params.forEach(param => {
             current[param.name] = input[i];
             baseEnv[param.name] = input[i];
-            i=i+1;
+            i = i + 1;
         });
 
-    }else{
+    } else {
         ast.params.forEach(param => {
             current[param.name] = param.name;
             baseEnv[param.name] = param.name;
         });
     }
-    genEnv(ast.body, envs, copyMap(current),input);
+    genEnv(ast.body, envs, copyMap(current), input);
 
 }
 
-function bodyEnv(ast, envs, baseEnv,input) {
+function bodyEnv(ast, envs, baseEnv, input) {
     if ('body' in ast) {
         if (Array.isArray(ast.body)) {
             ast.body.forEach(body => {
-                genEnv(body, envs, baseEnv,input);
+                genEnv(body, envs, baseEnv, input);
             });
         }
         else {
-            genEnv(ast.body, envs, baseEnv,input);
+            genEnv(ast.body, envs, baseEnv, input);
         }
     }
 }
@@ -103,7 +105,7 @@ function bodyEnv(ast, envs, baseEnv,input) {
 function makeItRight(env, expression) {
     let strings = Object.keys(env);
     return [expression].concat(strings).reduce((acc, v) => {
-        return morphline(''+acc, v, ''+env[v]);
+        return morphline('' + acc, v, '' + env[v]);
     });
 }
 

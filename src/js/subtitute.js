@@ -159,7 +159,13 @@ function morphline(line, varname, value) {
     while (start > -1) {
         let end = start + varname.length;
         if (verifyValidPick(line, start, end - 1)) {
-            line = line.replace(varname, value);
+
+            if(line[end+1] === '*' || line[end+1] ==='/'){
+                line = line.replace(varname, '('+value+')');
+            }
+            else {
+                line = line.replace(varname, value);
+            }
         }
         newline += line.substring(0, end);
         line = line.substring(end, line.length);
