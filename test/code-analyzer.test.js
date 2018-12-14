@@ -1,24 +1,25 @@
 import assert from 'assert';
 import { parseCode, myParseCode } from '../src/js/code-analyzer';
-import { parse } from '../src/js/crazy-parser';
+import { parse , getTableAndRefresh } from '../src/js/crazy-parser';
 import Trow from '../src/js/Trow';
 var constants = require('../src/js/constants');
+import {sub,mark} from '../src/js/subtitute';
 
-// describe('The javascript parser', () => {
-//     it('is parsing an empty function correctly', () => {
-//         assert.equal(
-//             JSON.stringify(parseCode('')),
-//             '{"type":"Program","body":[],"sourceType":"script"}'
-//         );
-//     });
-//
-//     it('is parsing a simple variable declaration correctly', () => {
-//         assert.equal(
-//             JSON.stringify(parseCode('let a = 1;')),
-//             '{"type":"Program","body":[{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"a"},"init":{"type":"Literal","value":1,"raw":"1"}}],"kind":"let"}],"sourceType":"script"}'
-//         );
-//     });
-// });
+describe('The javascript parser', () => {
+    it('is parsing an empty function correctly', () => {
+        assert.equal(
+            JSON.stringify(parseCode('')),
+            '{"type":"Program","body":[],"sourceType":"script"}'
+        );
+    });
+
+    it('is parsing a simple variable declaration correctly', () => {
+        assert.equal(
+            JSON.stringify(parseCode('let a = 1;')),
+            '{"type":"Program","body":[{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"a"},"init":{"type":"Literal","value":1,"raw":"1"}}],"kind":"let"}],"sourceType":"script"}'
+        );
+    });
+});
 
 // ///////////////////////////////////////////////////////////
 describe('Test For statement', () => {
@@ -38,7 +39,7 @@ describe('Test For statement', () => {
         assert.equal(pipline('for(let i = 0 ; i < 6 ; i++)\n{i = i + 5;}'), res);
     });
 });
-
+//
 describe('Test while statement', () => {
     it('parse while empty body', () => {
         let res = [new Trow('1', 'while statement', '', 'x==8', '').toHtml()].join(
@@ -139,6 +140,70 @@ describe('Test github code ', () => {
     });
 });
 
+describe('Test github code ', () => {
+    it('sub while code', () => {
+        getTableAndRefresh();
+        let code ='function foo(x, y, z){ \n let a = x + 1; \n let b = a + y; \n let c = 0; \n \n while (a < z) { \n c = a + b;\n z = c * 2;\n } \n return z; \n }';
+        let ast = myParseCode(code);
+        let  ans = sub(ast,code);
+        assert.equal(ans , 'function&nbspfoo(x,&nbspy,&nbspz){&nbsp</br>&nbsp</br>&nbspwhile&nbsp(x+1&nbsp<&nbspz)&nbsp{&nbsp</br>&nbspz&nbsp=&nbsp(x+1+x+1+y)&nbsp*&nbsp2;</br>&nbsp}&nbsp</br>&nbspreturn&nbspz;&nbsp</br>&nbsp}</br>');
+    });
+});
+
+describe('Test github code 2 ', () => {
+    it('sub first example', () => {
+        getTableAndRefresh();
+        let code ='function foo(x, y, z){\n' + '    let a = x + 1;\n' + '    let b = a + y;\n' + '    let c = 0;\n' + '    \n' + '    if (b < z) {\n' +
+            '        c = c + 5;\n' +
+            '        return x + y + z + c;\n' +
+            '    } else if (b < z * 2) {\n' +
+            '        c = c + x + 5;\n' +
+            '        return x + y + z + c;\n' +
+            '    } else {\n' +
+            '        c = c + z + 5;\n' +
+            '        return x + y + z + c;\n' +
+            '    }\n' +
+            '}\n';
+        let ast = myParseCode(code);
+        let  ans = sub(ast,code);
+        assert.equal(ans,'function&nbspfoo(x,&nbspy,&nbspz){</br>&nbsp&nbsp&nbsp&nbsp</br>&nbsp&nbsp&nbsp&nbspif&nbsp(x+1+y&nbsp<&nbspz)&nbsp{</br>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspreturn&nbspx&nbsp+&nbspy&nbsp+&nbspz&nbsp+&nbsp5;</br>&nbsp&nbsp&nbsp&nbsp}&nbspelse&nbspif&nbsp(x+1+y&nbsp<&nbsp(z)&nbsp*&nbsp2)&nbsp{</br>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspreturn&nbspx&nbsp+&nbspy&nbsp+&nbspz&nbsp+&nbspx+5;</br>&nbsp&nbsp&nbsp&nbsp}&nbspelse&nbsp{</br>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspreturn&nbspx&nbsp+&nbspy&nbsp+&nbspz&nbsp+&nbspz+5;</br>&nbsp&nbsp&nbsp&nbsp}</br>}</br>');
+    });
+});
+
+describe('mark github code 1 ', () => {
+    it('mark while code', () => {
+        getTableAndRefresh();
+
+        let code ='function foo(x, y, z){ \n let a = x + 1; \n let b = a + y; \n let c = 0; \n \n while (a < z) { \n c = a + b;\n z = c * 2;\n } \n return z; \n }';
+        let cmp = 'function foo(x, y, z){ <br/> <br/><mark style="background-color: green"> while (x+1 < z) { </mark><br/> z = (x+1+x+1+y) * 2;<br/> } <br/> return z; <br/> }<br/>';
+        let ast = myParseCode(code);
+        let  ans = mark(ast,code,['1','2','3']);
+        assert.equal(cmp,ans);
+    });
+});
+
+describe('mark github code 2 ', () => {
+    it('mark other code', () => {
+        getTableAndRefresh();
+
+        let code ='function foo(x, y, z){\n' + '    let a = x + 1;\n' + '    let b = a + y;\n' + '    let c = 0;\n' + '    \n' + '    if (b < z) {\n' +
+            '        c = c + 5;\n' +
+            '        return x + y + z + c;\n' +
+            '    } else if (b < z * 2) {\n' +
+            '        c = c + x + 5;\n' +
+            '        return x + y + z + c;\n' +
+            '    } else {\n' +
+            '        c = c + z + 5;\n' +
+            '        return x + y + z + c;\n' +
+            '    }\n' +
+            '}\n';
+        let cmp = 'function foo(x, y, z){<br/>    <br/><mark style="background-color: red">    if (x+1+y < z) {</mark><br/>        return x + y + z + 5;<br/><mark style="background-color: green">    } else if (x+1+y < (z) * 2) {</mark><br/>        return x + y + z + x+5;<br/>    } else {<br/>        return x + y + z + z+5;<br/>    }<br/>}<br/>';
+        let ast = myParseCode(code);
+        let  ans = mark(ast,code,['1','2','3']);
+        assert.equal(cmp,ans);
+    });
+});
 function pipline(string) {
     return parse(myParseCode(string));
 }
+
