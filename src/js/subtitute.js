@@ -25,6 +25,7 @@ function subForColor(ast,code){
 function mark(ast, code, input) {
     let envs = {};
     let e = eval(input);
+    e = mapE(e);
     genEnv(ast, envs, {}, e);
     parse(ast);
     let table = getTableAndRefresh();
@@ -32,6 +33,11 @@ function mark(ast, code, input) {
     let subcode = subForColor(ast,code);
     return myJoin(paint(subcode,colors)).replaceAll('\n','<br/>');
 }
+
+function mapE(e) {
+    return e.map(x=>String(x));
+}
+
 function paint(code,colors){
     Object.keys(colors).forEach(key=>{
         let mykey = parseInt(key);
@@ -103,8 +109,6 @@ function removeMeaninglessAssignments(ast, code, functionParams) {
         }
     }
     return lines;
-
-
 }
 
 function myJoin(lines) {
@@ -113,44 +117,47 @@ function myJoin(lines) {
     });
 }
 
-// function killLetLine(line){
-//     return line.indexOf('let')!==-1 ? '' : line;
-// }
-// function killParamLine(line,params){
-//     let rightside = line;
-//     while(rightside.indexOf('=')>=0){
-//         rightside = rightside.substring(0,rightside.indexOf('=='));
-//     }
-//     rightside =line.substring(0,line.indexOf('='));
-//     for(let i = 0 ; i < params.length; i++){
-//         if(rightside.indexOf(params[i])!==-1){
-//             return '';
-//         }
-//     }
-// }
-// function cutEquation(line){
-//     let r = new RegExp('>|<|=|!');
-//
-// }
-
 function extractParams(ast) {
     if ('FunctionDeclaration' === ast.type) {
         return paramsSlayer(ast.params);
     }
-    else if ('body' in ast) {
-        if (Array.isArray(ast.body)) {
-            for (let i = 0; i < ast.body.length; i++) {
-                return extractParams(ast.body[i]);
-            }
-        }
-        else {
-            return extractParams(ast.body);
-        }
+    else{
+        return extractParams(ast.body[0]);
     }
+    //else if ('body' in ast) {
+    // if (Array.isArray(ast.body)) {
+    //     for (let i = 0; i < ast.body.length; i++) {
+    //         return extractParams(ast.body[i]);
+    //     }
+    // }
+    // // else {
+    //     return extractParams(ast.body);
+    // }
+    //}
 }
 
 function paramsSlayer(ast) {
     return ast.map(p => p.name);
+}
+
+function parenCases(line, end, varname, value, start) {
+    if (line[end + 1] === '*' || line[end + 1] === '/') {
+        line = line.replace(varname, '(' + value + ')');
+    }
+    else if (start - 1 > -1 && line[start - 1] === '-') {
+        line = line.replace(varname, '(' + value + ')');
+    }
+    else {
+        line = line.replace(varname, value);
+    }
+    return line;
+}
+
+function putParensIfRE(line, start, end, varname, value) {
+    if (verifyValidPick(line, start, end - 1)) {
+        line = parenCases(line, end, varname, value, start);
+    }
+    return line;
 }
 
 function morphline(line, varname, value) {
@@ -158,15 +165,7 @@ function morphline(line, varname, value) {
     let newline = '';
     while (start > -1) {
         let end = start + varname.length;
-        if (verifyValidPick(line, start, end - 1)) {
-
-            if(line[end+1] === '*' || line[end+1] ==='/'){
-                line = line.replace(varname, '('+value+')');
-            }
-            else {
-                line = line.replace(varname, value);
-            }
-        }
+        line = putParensIfRE(line, start, end, varname, value);
         newline += line.substring(0, end);
         line = line.substring(end, line.length);
         start = line.indexOf(varname);
@@ -177,17 +176,25 @@ function morphline(line, varname, value) {
 
 function verifyValidPick(line, start, end) {
     let re = new RegExp('([a-zA-Z0-9])');
-    if (start > 0 && re.test(line[start - 1])) {
-        return false;
-    }
+    // if (start > 0 && re.test(line[start - 1])) {
+    //     return false;
+    // }
     return !(end + 1 < line.length - 1 && re.test(line[end + 1])) && nextCharNotEq(line,end);
 
 }
 
+function isEQEQ(line, i) {
+    return line[i] === '=' && eqclose(line, i);
+}
+
+function spaceOrTab(line, i) {
+    return line[i] !== ' ' && line[i] !== '  ';
+}
+
 function nextCharNotEq(line, start){
     for(let i = start + 1 ; i < line.length ; i++){
-        if(line[i]!==' '&& line[i] !=='  ') {
-            if(line[i] === '=' && eqclose(line,i)){
+        if(spaceOrTab(line, i)) {
+            if(isEQEQ(line, i)){
                 return true;
             }
             else if(line[i] === '='){
@@ -208,7 +215,7 @@ function eqclose(line, start){
             return false;
         }
     }
-    return false;
+    // return false;
 }
 
 function filterZeros(envs) {

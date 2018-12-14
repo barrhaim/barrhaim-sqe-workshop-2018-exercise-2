@@ -185,7 +185,6 @@ describe('mark github code 1 ', () => {
 describe('mark github code 2 ', () => {
     it('mark other code', () => {
         getTableAndRefresh();
-
         let code ='function foo(x, y, z){\n' + '    let a = x + 1;\n' + '    let b = a + y;\n' + '    let c = 0;\n' + '    \n' + '    if (b < z) {\n' +
             '        c = c + 5;\n' +
             '        return x + y + z + c;\n' +
@@ -203,6 +202,70 @@ describe('mark github code 2 ', () => {
         assert.equal(cmp,ans);
     });
 });
+
+describe('mark unary ', () => {
+    it('mark other code', () => {
+        getTableAndRefresh();
+        let code ='function foo(x, y, z){\n' + '    let a = x + 1;\n' + '    let b = a + y;\n' + '    let c = 0;\n' + '    \n' + '    if (b < z) {\n' +
+            '        c = c + 5;\n' +
+            '        return x + y + z + c;\n' +
+            '    } else if (b < z * 2) {\n' +
+            '        c = c + x + 5;\n' +
+            '        return x + y + z + c;\n' +
+            '    } else {\n' +
+            '        c = c + z + 5;\n' +
+            '        return -c;\n' +
+            '    }\n' +
+            '}\n';
+        let cmp = 'function foo(x, y, z){<br/>    <br/><mark style="background-color: red">    if (x+1+y < z) {</mark><br/>        return x + y + z + 5;<br/><mark style="background-color: green">    } else if (x+1+y < (z) * 2) {</mark><br/>        return x + y + z + x+5;<br/>    } else {<br/>        return -(z+5);<br/>    }<br/>}<br/>';
+        let ast = myParseCode(code);
+        let  ans = mark(ast,code,['1','2','3']);
+        assert.equal(cmp,ans);
+    });
+});
+
+describe('mark unary ', () => {
+    it('mark other code', () => {
+        getTableAndRefresh();
+        const code = 'function foo(x, y, z){\n' + '    let a = x + 1;\n' +
+            '    let b = a + y;\n' +
+            '    let c = 0;\n' +
+            '    \n' +
+            '    while (a == z) {\n' +
+            '        c = a + b;\n' +
+            '        z = c * 2;\n' +
+            '    }\n' +
+            '    \n' +
+            '    return z;\n' +
+            '}\n';
+        let cmp = 'function foo(x, y, z){<br/>    <br/><mark style="background-color: red">    while (x+1 == z) {</mark><br/>        z = (x+1+x+1+y) * 2;<br/>    }<br/>    <br/>    return z;<br/>}<br/>';
+        let ast = myParseCode(code);
+        let  ans = mark(ast,code,['1','2','3']);
+        assert.equal(cmp,ans);
+    });
+});
+
+describe('inner exprssion ', () => {
+    it('wont replace while word', () => {
+        getTableAndRefresh();
+        const code = 'function foo(x, y, z){\n' + '    let a = x + 1;\n' +
+            '    let w = a + y;\n' +
+            '    let c = 0;\n' +
+            '    \n' +
+            '    while (a == z) {\n' +
+            '        c = a + w;\n' +
+            '        z = c * 2;\n' +
+            '    }\n' +
+            '    \n' +
+            '    return z;\n' +
+            '}\n';
+        let cmp = 'function foo(x, y, z){<br/>    <br/><mark style="background-color: red">    while (x+1 == z) {</mark><br/>        z = (x+1+x+1+y) * 2;<br/>    }<br/>    <br/>    return z;<br/>}<br/>';
+        let ast = myParseCode(code);
+        let  ans = mark(ast,code,['1','2','3']);
+        assert.equal(cmp,ans);
+    });
+});
+
 function pipline(string) {
     return parse(myParseCode(string));
 }

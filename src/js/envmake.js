@@ -41,8 +41,9 @@ function VariableDeclarationEnv(ast, envs, baseEnv, input) {
 function variableDeclaratorEnv(ast, envs, baseEnv, input) {
     makeEnv(envs, baseEnv, ast.loc.start.line);
     let currentmap = envs[ast.loc.start.line];
-    let val = ast.init === null ?
-        makeItRight(currentmap, 'null') : makeItRight(currentmap, binaryExpressionToString(ast.init));
+    // let val = ast.init === null ?
+    //     makeItRight(currentmap, 'null') : makeItRight(currentmap, binaryExpressionToString(ast.init));
+    let val = makeItRight(currentmap, binaryExpressionToString(ast.init));// replace that with above
     currentmap[ast.id.name] = val;
     baseEnv[ast.id.name] = val;
 }
@@ -58,9 +59,11 @@ function assignmentExpressionEnv(ast, envs, baseEnv, input) {
 function ifStatementEnv(ast, envs, baseEnv, input) {
     makeEnv(envs, baseEnv, ast.loc.start.line);
     genEnv(ast.consequent, envs, copyMap(baseEnv));
-    if (ast.alternate !== null) {
-        genEnv(ast.alternate, envs, copyMap(baseEnv), input);
-    }
+    // if (ast.alternate !== null) {
+    //     genEnv(ast.alternate, envs, copyMap(baseEnv), input);
+    // }
+    //replace with top
+    genEnv(ast.alternate, envs, copyMap(baseEnv), input);
 }
 
 function whileStatementEnv(ast, envs, baseEnv, input) {
@@ -90,15 +93,21 @@ function functionDeclarationEnv(ast, envs, baseEnv, input) {
 }
 
 function bodyEnv(ast, envs, baseEnv, input) {
+    // if ('body' in ast) {
+    //     if (Array.isArray(ast.body)) {
+    //         ast.body.forEach(body => {
+    //             genEnv(body, envs, baseEnv, input);
+    //         });
+    //     }
+    //     else {
+    //         genEnv(ast.body, envs, baseEnv, input);
+    //     }
+    // }
+    //replace all with top
     if ('body' in ast) {
-        if (Array.isArray(ast.body)) {
-            ast.body.forEach(body => {
-                genEnv(body, envs, baseEnv, input);
-            });
-        }
-        else {
-            genEnv(ast.body, envs, baseEnv, input);
-        }
+        ast.body.forEach(body => {
+            genEnv(body, envs, baseEnv, input);
+        });
     }
 }
 
@@ -130,28 +139,29 @@ function binaryExpressionToString(toParse) {
         return toParse['name'];
     case 'Literal':
         return toParse['value'];
-    case 'MemberExpression':
-        return toParse['object']['name'] + `[${binaryExpressionToString(toParse['property'])}]`;
-    case 'UnaryExpression':
-        return (
-            toParse['operator'] + binaryExpressionToString(toParse['argument'])
-        );
+    // case 'MemberExpression':
+    //     return toParse['object']['name'] + `[${binaryExpressionToString(toParse['property'])}]`;
+    // case 'UnaryExpression':
+    //     return (
+    //         toParse['operator'] + binaryExpressionToString(toParse['argument'])
+    //     );
     default:
         return handleBinary(toParse);
     }
 }
 
 function handleBinary(toParse) {
-    let mymap = {
-        '&': '&amp',
-        '&&': '&amp&amp',
-        '<': '&lt',
-        '>': '&gt'
-    };
+    // let mymap = {
+    //     '&': '&amp',
+    //     '&&': '&amp&amp',
+    //     '<': '&lt',
+    //     '>': '&gt'
+    // };
     let op = toParse['operator'];
     return (
         binaryExpressionToString(toParse['left']) +
-        (op in mymap ? mymap[op] : op) +
+        // (op in mymap ? mymap[op] : op) +
+        op +
         binaryExpressionToString(toParse['right'])
     );
 }
