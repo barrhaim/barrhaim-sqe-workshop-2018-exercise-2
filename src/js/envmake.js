@@ -1,5 +1,6 @@
 import {morphline} from './subtitute';
 
+var push = [];
 
 function genEnv(ast, envs, baseEnv, input) {
     let envfunc = {
@@ -46,6 +47,7 @@ function variableDeclaratorEnv(ast, envs, baseEnv, input) {
     let val = makeItRight(currentmap, binaryExpressionToString(ast.init));// replace that with above
     currentmap[ast.id.name] = val;
     baseEnv[ast.id.name] = val;
+    push.push(input);
 }
 
 function assignmentExpressionEnv(ast, envs, baseEnv, input) {
@@ -54,6 +56,7 @@ function assignmentExpressionEnv(ast, envs, baseEnv, input) {
     let val = makeItRight(currentmap, binaryExpressionToString(ast.right));
     currentmap[ast.left.name] = val;
     baseEnv[ast.left.name] = val;
+    push.push(input);
 }
 
 function ifStatementEnv(ast, envs, baseEnv, input) {

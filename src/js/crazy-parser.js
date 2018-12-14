@@ -1,5 +1,5 @@
 import Trow from './Trow';
-var rows = []
+var rows = [];
 
 function parseBody(toParse) {
     return ['']
@@ -14,8 +14,8 @@ function parseFunction(toParse) {
 
     return (
         template(line, type, name, '', '') +
-        paramsSlayer(toParse['params']) +
-        parse(toParse['body'])
+    paramsSlayer(toParse['params']) +
+    parse(toParse['body'])
     );
 }
 
@@ -43,7 +43,7 @@ function parseVariableDeclarator(toParse) {
     let type = 'variable declaration';
     let name = toParse['id']['name'];
     let value =
-        toParse['init'] !== null ? binaryExpressionToString(toParse['init']) : '';
+    toParse['init'] !== null ? binaryExpressionToString(toParse['init']) : '';
     return template(line, type, name, '', value);
 }
 
@@ -73,7 +73,10 @@ function binaryExpressionToString(toParse) {
     case 'Literal':
         return toParse['value'];
     case 'MemberExpression':
-        return toParse['object']['name'] + `[${binaryExpressionToString(toParse['property'])}]`;
+        return (
+            toParse['object']['name'] +
+        `[${binaryExpressionToString(toParse['property'])}]`
+        );
     case 'UnaryExpression':
         return (
             toParse['operator'] + binaryExpressionToString(toParse['argument'])
@@ -82,7 +85,7 @@ function binaryExpressionToString(toParse) {
         return handleBinary(toParse);
     }
 }
-function handleBinary(toParse){
+function handleBinary(toParse) {
     // let mymap = {
     //     '&': '&amp',
     //     '&&': '&amp&amp',
@@ -92,8 +95,8 @@ function handleBinary(toParse){
     let op = toParse['operator'];
     return (
         binaryExpressionToString(toParse['left']) + // (op in mymap ? mymap[op] : op) +
-        op +
-        binaryExpressionToString(toParse['right'])
+    op +
+    binaryExpressionToString(toParse['right'])
     );
 }
 
@@ -110,17 +113,18 @@ function parseIfStatement(toParse, isFirst) {
     let line = toParse['loc']['start']['line'];
     return (
         template(line, type, '', condition, '') +
-        parse(toParse['consequent']) +
-        (toParse['alternate'] !== null &&
-        toParse['alternate']['type'] !== 'IfStatement'
-            ? template(
-                toParse['alternate']['loc']['start']['line'] - 1, 'else statement', '',
-                '',
-                ''
-            ) + parse(toParse['alternate'], false)
-            : toParse['alternate'] !== null
-                ? parse(toParse['alternate'], false)
-                : '')
+    parse(toParse['consequent']) +
+    (toParse['alternate'] !== null &&
+    toParse['alternate']['type'] !== 'IfStatement'
+        ? template(
+            toParse['alternate']['loc']['start']['line'] - 1,
+            'else statement',
+            '',
+            '',
+            ''
+        ) + parse(toParse['alternate'], false) : toParse['alternate'] !== null
+            ? parse(toParse['alternate'], false)
+            : '')
     );
 }
 
@@ -137,8 +141,8 @@ function parseForStatement(toParse) {
     let line = toParse['loc']['start']['line'];
     return (
         template(line, type, '', condition, '') +
-        parseVariableDeclaration(toParse['init']) +
-        parseBody(toParse)
+    parseVariableDeclaration(toParse['init']) +
+    parseBody(toParse)
     );
 }
 
@@ -156,33 +160,33 @@ function ifWrapper(toParse, controlFlag) {
     return controlFlag === undefined
         ? parseIfStatement(toParse, true) // means its first if
         : parseIfStatement(toParse, controlFlag);
-
 }
 
 function parse(toParse, controlFlag) {
     let type = toParse['type'];
     let supermap = {
-        'Program': parseProgram,
-        'FunctionDeclaration': parseFunction,
-        'VariableDeclaration': parseVariableDeclaration,
-        'Identifier': parseIndentifer,
-        'BlockStatement': parseBlockStatement,
-        'VariableDeclarator': parseVariableDeclarator,
-        'ExpressionStatement': parseExpressionStatement,
-        'AssignmentExpression': parseAssignmentExpression,
-        'WhileStatement': parseWhileStatement,
-        'IfStatement': ifWrapper,
-        'ReturnStatement': parseReturnStatement,
-        'ForStatement': parseForStatement
+        Program: parseProgram,
+        FunctionDeclaration: parseFunction,
+        VariableDeclaration: parseVariableDeclaration,
+        Identifier: parseIndentifer,
+        BlockStatement: parseBlockStatement,
+        VariableDeclarator: parseVariableDeclarator,
+        ExpressionStatement: parseExpressionStatement,
+        AssignmentExpression: parseAssignmentExpression,
+        WhileStatement: parseWhileStatement,
+        IfStatement: ifWrapper,
+        ReturnStatement: parseReturnStatement,
+        ForStatement: parseForStatement
     };
-    return type !== 'IfStatement' && (type in supermap) ? supermap[type](toParse) :
-        (type === 'IfStatement' ? supermap[type](toParse, controlFlag) : '');
+    return type !== 'IfStatement' && type in supermap ? supermap[type](toParse) : type === 'IfStatement'
+        ? supermap[type](toParse, controlFlag)
+        : '';
 }
 
-function getTableAndRefresh(){
+function getTableAndRefresh() {
     let sem = rows;
     rows = [];
     return sem;
 }
 
-export {parse,getTableAndRefresh};
+export { parse, getTableAndRefresh };
